@@ -2,6 +2,7 @@ import { createSignal, For, Show } from "solid-js";
 import { createQuery, createMutation, useQueryClient } from "@tanstack/solid-query";
 import { listFriends, putFriend, deleteFriend, type Friend } from "../lib/db";
 import { credentials, dynamoCtx } from "../store/auth";
+import ConfirmDialog from "./ConfirmDialog";
 
 interface Props {
   selectedFriendId: string | null;
@@ -9,7 +10,7 @@ interface Props {
 }
 
 function getInitials(name: string): string {
-  return name
+  return (name ?? "")
     .split(" ")
     .map((w) => w[0])
     .slice(0, 2)
@@ -49,6 +50,7 @@ export default function FriendsList(props: Props) {
   const [showAdd, setShowAdd] = createSignal(false);
   const [newName, setNewName] = createSignal("");
   const [addError, setAddError] = createSignal("");
+  const [confirmDeleteId, setConfirmDeleteId] = createSignal<string | null>(null);
 
   const userId = () => credentials()?.userId ?? "";
 
@@ -71,13 +73,16 @@ export default function FriendsList(props: Props) {
 
   const deleteMutation = createMutation(() => ({
     mutationFn: (friendId: string) => deleteFriend(dynamoCtx()!, userId(), friendId),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["friends", userId()] }),
+    onSuccess: () => {
+      setConfirmDeleteId(null);
+      qc.invalidateQueries({ queryKey: ["friends", userId()] });
+    },
   }));
 
   const filtered = () => {
     const q = search().toLowerCase();
     return (friendsQuery.data ?? []).filter((f) =>
-      f.name.toLowerCase().includes(q) || (f.nickname ?? "").toLowerCase().includes(q)
+      (f.name ?? "").toLowerCase().includes(q) || (f.nickname ?? "").toLowerCase().includes(q)
     );
   };
 
@@ -134,7 +139,7 @@ export default function FriendsList(props: Props) {
                     <span class="text-sm">🎂</span>
                   </Show>
                   <Show when={!isBirthdayToday(friend.birthday) && isBirthdaySoon(friend.birthday)}>
-                    <span class="text-xs text-yellow-400">soon</span>
+                    <span class="text-xs text-yellow-400">pronto</span>
                   </Show>
                 </div>
                 <Show when={friend.nickname}>
@@ -142,8 +147,8 @@ export default function FriendsList(props: Props) {
                 </Show>
               </div>
               <button
-                onClick={(e) => { e.stopPropagation(); deleteMutation.mutate(friend.friendId); }}
-                class="opacity-0 group-hover:opacity-100 text-gray-600 hover:text-red-400 text-xs px-1 transition-opacity"
+                onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(friend.friendId); }}
+                class="opacity-100 md:opacity-0 md:group-hover:opacity-100 text-gray-500 hover:text-red-400 text-xs px-1 transition-opacity"
               >
                 ✕
               </button>
@@ -193,6 +198,14 @@ export default function FriendsList(props: Props) {
           </button>
         </Show>
       </div>
+
+      <ConfirmDialog
+        open={!!confirmDeleteId()}
+        message="Esta acción no se puede deshacer."
+        isPending={deleteMutation.isPending}
+        onConfirm={() => deleteMutation.mutate(confirmDeleteId()!)}
+        onCancel={() => setConfirmDeleteId(null)}
+      />
     </div>
   );
 }

@@ -2,6 +2,7 @@ import { createSignal, For, Show } from "solid-js";
 import { createQuery, createMutation, useQueryClient } from "@tanstack/solid-query";
 import { listReminders, putReminder, toggleReminder, deleteReminder, type Reminder } from "../lib/db";
 import { credentials, dynamoCtx } from "../store/auth";
+import ConfirmDialog from "./ConfirmDialog";
 
 interface Props {
   friendId: string;
@@ -24,6 +25,7 @@ export default function Reminders(props: Props) {
   const [rTitle, setRTitle] = createSignal("");
   const [rDesc, setRDesc] = createSignal("");
   const [rDate, setRDate] = createSignal("");
+  const [confirmDeleteId, setConfirmDeleteId] = createSignal<string | null>(null);
 
   const remindersQuery = createQuery(() => ({
     queryKey: ["reminders", userId(), props.friendId],
@@ -52,7 +54,10 @@ export default function Reminders(props: Props) {
   const deleteMutation = createMutation(() => ({
     mutationFn: (reminderId: string) =>
       deleteReminder(dynamoCtx()!, userId(), props.friendId, reminderId),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["reminders", userId(), props.friendId] }),
+    onSuccess: () => {
+      setConfirmDeleteId(null);
+      qc.invalidateQueries({ queryKey: ["reminders", userId(), props.friendId] });
+    },
   }));
 
   function handleAdd() {
@@ -154,8 +159,8 @@ export default function Reminders(props: Props) {
                 </div>
               </div>
               <button
-                onClick={() => deleteMutation.mutate(r.reminderId)}
-                class="opacity-0 group-hover:opacity-100 text-gray-600 hover:text-red-400 text-xs transition-opacity"
+                onClick={() => setConfirmDeleteId(r.reminderId)}
+                class="opacity-100 md:opacity-0 md:group-hover:opacity-100 text-gray-600 hover:text-red-400 text-xs transition-opacity"
               >
                 ✕
               </button>
@@ -179,8 +184,8 @@ export default function Reminders(props: Props) {
                   <div class="text-xs text-gray-600">{formatDateTime(r.remindAt)}</div>
                 </div>
                 <button
-                  onClick={() => deleteMutation.mutate(r.reminderId)}
-                  class="opacity-0 group-hover:opacity-100 text-gray-600 hover:text-red-400 text-xs transition-opacity"
+                  onClick={() => setConfirmDeleteId(r.reminderId)}
+                  class="opacity-100 md:opacity-0 md:group-hover:opacity-100 text-gray-600 hover:text-red-400 text-xs transition-opacity"
                 >
                   ✕
                 </button>
@@ -189,6 +194,14 @@ export default function Reminders(props: Props) {
           </For>
         </Show>
       </div>
+
+      <ConfirmDialog
+        open={!!confirmDeleteId()}
+        message="Esta acción no se puede deshacer."
+        isPending={deleteMutation.isPending}
+        onConfirm={() => deleteMutation.mutate(confirmDeleteId()!)}
+        onCancel={() => setConfirmDeleteId(null)}
+      />
     </div>
   );
 }

@@ -2,6 +2,7 @@ import { createSignal, For, Show } from "solid-js";
 import { createQuery, createMutation, useQueryClient } from "@tanstack/solid-query";
 import { listDates, putDate, deleteDate, type ImportantDate } from "../lib/db";
 import { credentials, dynamoCtx } from "../store/auth";
+import ConfirmDialog from "./ConfirmDialog";
 
 interface Props {
   friendId: string;
@@ -29,6 +30,7 @@ export default function ImportantDates(props: Props) {
   const [title, setTitle] = createSignal("");
   const [date, setDate] = createSignal("");
   const [recurring, setRecurring] = createSignal(false);
+  const [confirmDeleteId, setConfirmDeleteId] = createSignal<string | null>(null);
 
   const datesQuery = createQuery(() => ({
     queryKey: ["dates", userId(), props.friendId],
@@ -50,7 +52,10 @@ export default function ImportantDates(props: Props) {
 
   const deleteMutation = createMutation(() => ({
     mutationFn: (dateId: string) => deleteDate(dynamoCtx()!, userId(), props.friendId, dateId),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["dates", userId(), props.friendId] }),
+    onSuccess: () => {
+      setConfirmDeleteId(null);
+      qc.invalidateQueries({ queryKey: ["dates", userId(), props.friendId] });
+    },
   }));
 
   function handleAdd() {
@@ -135,15 +140,15 @@ export default function ImportantDates(props: Props) {
                   <div class="text-xs font-bold text-indigo-400">{days === 0 ? "HOY" : `${days}d`}</div>
                   <div class="text-xs text-gray-500">{formatDate(d.date)}</div>
                 </div>
-                <div class="flex-1">
+                <div class="flex-1 min-w-0">
                   <div class="text-sm font-medium text-white">{d.title}</div>
                   <Show when={d.recurring}>
                     <span class="text-xs text-gray-500">🔄 Anual</span>
                   </Show>
                 </div>
                 <button
-                  onClick={() => deleteMutation.mutate(d.dateId)}
-                  class="opacity-0 group-hover:opacity-100 text-gray-600 hover:text-red-400 text-xs transition-opacity"
+                  onClick={() => setConfirmDeleteId(d.dateId)}
+                  class="opacity-100 md:opacity-0 md:group-hover:opacity-100 text-gray-600 hover:text-red-400 text-xs transition-opacity"
                 >
                   ✕
                 </button>
@@ -152,6 +157,14 @@ export default function ImportantDates(props: Props) {
           }}
         </For>
       </div>
+
+      <ConfirmDialog
+        open={!!confirmDeleteId()}
+        message="Esta acción no se puede deshacer."
+        isPending={deleteMutation.isPending}
+        onConfirm={() => deleteMutation.mutate(confirmDeleteId()!)}
+        onCancel={() => setConfirmDeleteId(null)}
+      />
     </div>
   );
 }

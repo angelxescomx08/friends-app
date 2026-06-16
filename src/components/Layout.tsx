@@ -12,16 +12,12 @@ export default function Layout() {
 
   return (
     <div class="flex h-screen w-screen bg-gray-950 text-white overflow-hidden">
-      {/* Sidebar */}
-      <div class="flex flex-col w-72 flex-shrink-0 bg-gray-900 border-r border-gray-800">
+      {/* Sidebar — full screen on mobile cuando no hay amigo seleccionado */}
+      <div class={`flex flex-col flex-shrink-0 bg-gray-900 border-r border-gray-800 w-full md:w-72 ${selectedFriendId() ? "hidden md:flex" : "flex"}`}>
         {/* User header */}
         <div class="flex items-center gap-3 px-4 py-4 border-b border-gray-800">
           <Show when={credentials()?.picture}>
-            <img
-              src={credentials()!.picture}
-              alt="avatar"
-              class="w-8 h-8 rounded-full"
-            />
+            <img src={credentials()!.picture} alt="avatar" class="w-8 h-8 rounded-full" />
           </Show>
           <Show when={!credentials()?.picture}>
             <div class="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-xs font-bold">
@@ -35,7 +31,7 @@ export default function Layout() {
           <button
             onClick={logout}
             class="text-gray-500 hover:text-red-400 text-xs px-1.5 py-1 rounded hover:bg-gray-800 transition-colors"
-            title="Sign out"
+            title="Cerrar sesión"
           >
             ↩
           </button>
@@ -45,7 +41,7 @@ export default function Layout() {
         <div class="px-4 py-3">
           <div class="flex items-center gap-2">
             <span class="text-lg">👥</span>
-            <span class="text-sm font-semibold text-gray-300">My Friends</span>
+            <span class="text-sm font-semibold text-gray-300">Mis amigos</span>
           </div>
         </div>
 
@@ -58,10 +54,13 @@ export default function Layout() {
         </div>
       </div>
 
-      {/* Main area */}
-      <div class="flex-1 overflow-hidden">
+      {/* Main — full screen en mobile cuando hay amigo seleccionado */}
+      <div class={`flex-1 overflow-hidden flex-col ${selectedFriendId() ? "flex" : "hidden md:flex"}`}>
         <Show when={selectedFriendId()}>
-          <FriendDetail friendId={selectedFriendId()!} />
+          <FriendDetail
+            friendId={selectedFriendId()!}
+            onBack={() => setSelectedFriendId(null)}
+          />
         </Show>
         <Show when={!selectedFriendId()}>
           <div class="flex flex-col items-center justify-center h-full gap-4 text-gray-600">

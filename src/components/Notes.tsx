@@ -2,6 +2,7 @@ import { createSignal, For, Show } from "solid-js";
 import { createQuery, createMutation, useQueryClient } from "@tanstack/solid-query";
 import { listNotes, putNote, updateNote, deleteNote, type Note } from "../lib/db";
 import { credentials, dynamoCtx } from "../store/auth";
+import ConfirmDialog from "./ConfirmDialog";
 
 interface Props {
   friendId: string;
@@ -15,6 +16,7 @@ export default function Notes(props: Props) {
   const [newContent, setNewContent] = createSignal("");
   const [editingId, setEditingId] = createSignal<string | null>(null);
   const [editContent, setEditContent] = createSignal("");
+  const [confirmDeleteId, setConfirmDeleteId] = createSignal<string | null>(null);
 
   const notesQuery = createQuery(() => ({
     queryKey: ["notes", userId(), props.friendId],
@@ -45,7 +47,10 @@ export default function Notes(props: Props) {
   const deleteMutation = createMutation(() => ({
     mutationFn: (noteId: string) =>
       deleteNote(dynamoCtx()!, userId(), props.friendId, noteId),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["notes", userId(), props.friendId] }),
+    onSuccess: () => {
+      setConfirmDeleteId(null);
+      qc.invalidateQueries({ queryKey: ["notes", userId(), props.friendId] });
+    },
   }));
 
   const sorted = () =>
@@ -54,6 +59,7 @@ export default function Notes(props: Props) {
     );
 
   function startEdit(note: Note) {
+    setConfirmDeleteId(null);
     setEditingId(note.noteId);
     setEditContent(note.content);
   }
@@ -115,7 +121,7 @@ export default function Notes(props: Props) {
                   <span class="text-xs text-gray-600">
                     {new Date(note.updatedAt).toLocaleDateString()}
                   </span>
-                  <div class="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div class="flex gap-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
                     <button
                       onClick={() => startEdit(note)}
                       class="text-xs text-gray-400 hover:text-indigo-400"
@@ -123,7 +129,7 @@ export default function Notes(props: Props) {
                       Editar
                     </button>
                     <button
-                      onClick={() => deleteMutation.mutate(note.noteId)}
+                      onClick={() => setConfirmDeleteId(note.noteId)}
                       class="text-xs text-gray-400 hover:text-red-400"
                     >
                       Eliminar
@@ -158,6 +164,14 @@ export default function Notes(props: Props) {
           )}
         </For>
       </div>
+
+      <ConfirmDialog
+        open={!!confirmDeleteId()}
+        message="Esta acción no se puede deshacer."
+        isPending={deleteMutation.isPending}
+        onConfirm={() => deleteMutation.mutate(confirmDeleteId()!)}
+        onCancel={() => setConfirmDeleteId(null)}
+      />
     </div>
   );
 }

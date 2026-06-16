@@ -9,6 +9,7 @@ import Reminders from "./Reminders";
 
 interface Props {
   friendId: string;
+  onBack?: () => void;
 }
 
 type Tab = "preferences" | "dates" | "notes" | "reminders";
@@ -72,21 +73,26 @@ export default function FriendDetail(props: Props) {
 
       <Show when={friend()}>
         {/* Header */}
-        <div class="flex items-center gap-4 px-6 py-5 border-b border-gray-800">
+        <div class="flex items-center gap-3 px-4 py-4 border-b border-gray-800">
+          <Show when={props.onBack}>
+            <button
+              onClick={props.onBack}
+              class="md:hidden text-gray-400 hover:text-white p-1 -ml-1 rounded text-lg leading-none"
+            >
+              ←
+            </button>
+          </Show>
           <div
-            class="flex-shrink-0 w-14 h-14 rounded-full flex items-center justify-center text-white text-lg font-bold shadow-lg"
+            class="flex-shrink-0 w-11 h-11 md:w-14 md:h-14 rounded-full flex items-center justify-center text-white text-base md:text-lg font-bold shadow-lg"
             style={{ "background-color": friend()!.avatarColor }}
           >
             {getInitials(friend()!.name)}
           </div>
-          <div class="flex-1">
+          <div class="flex-1 min-w-0">
             <Show when={!editingName()}>
               <div class="flex items-center gap-2">
-                <h2 class="text-xl font-bold text-white">{friend()!.name}</h2>
-                <button
-                  onClick={startEditName}
-                  class="text-gray-500 hover:text-gray-300 text-xs"
-                >
+                <h2 class="text-base md:text-xl font-bold text-white truncate">{friend()!.name}</h2>
+                <button onClick={startEditName} class="text-gray-500 hover:text-gray-300 text-xs flex-shrink-0">
                   ✏
                 </button>
               </div>
@@ -98,25 +104,25 @@ export default function FriendDetail(props: Props) {
               </Show>
             </Show>
             <Show when={editingName()}>
-              <div class="flex items-center gap-2">
+              <div class="flex items-center gap-2 flex-wrap">
                 <input
                   type="text"
                   value={nameInput()}
                   onInput={(e) => setNameInput(e.currentTarget.value)}
                   onKeyDown={(e) => { if (e.key === "Enter") saveName(); if (e.key === "Escape") setEditingName(false); }}
                   autofocus
-                  class="rounded-lg bg-gray-800 border border-gray-600 px-3 py-1.5 text-white text-sm focus:outline-none focus:border-indigo-500"
+                  class="rounded-lg bg-gray-800 border border-gray-600 px-3 py-1.5 text-white text-sm focus:outline-none focus:border-indigo-500 min-w-0 flex-1"
                 />
                 <button
                   onClick={saveName}
                   disabled={updateMutation.isPending}
-                  class="rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs px-3 py-1.5"
+                  class="rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs px-3 py-1.5 flex-shrink-0"
                 >
                   Guardar
                 </button>
                 <button
                   onClick={() => setEditingName(false)}
-                  class="rounded-lg bg-gray-700 hover:bg-gray-600 text-white text-xs px-2 py-1.5"
+                  class="rounded-lg bg-gray-700 hover:bg-gray-600 text-white text-xs px-2 py-1.5 flex-shrink-0"
                 >
                   ✕
                 </button>
@@ -126,24 +132,24 @@ export default function FriendDetail(props: Props) {
         </div>
 
         {/* Tabs */}
-        <div class="flex border-b border-gray-800 px-6">
+        <div class="flex border-b border-gray-800 px-2 md:px-4 overflow-x-auto">
           {TABS.map((tab) => (
             <button
               onClick={() => setActiveTab(tab.id)}
-              class={`flex items-center gap-1.5 px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
+              class={`flex items-center gap-1 md:gap-1.5 px-3 md:px-4 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
                 activeTab() === tab.id
                   ? "border-indigo-500 text-indigo-400"
                   : "border-transparent text-gray-500 hover:text-gray-300"
               }`}
             >
               <span>{tab.icon}</span>
-              {tab.label}
+              <span class="hidden sm:inline">{tab.label}</span>
             </button>
           ))}
         </div>
 
         {/* Tab content */}
-        <div class="flex-1 overflow-y-auto p-6">
+        <div class="flex-1 overflow-y-auto p-4 md:p-6">
           <Switch>
             <Match when={activeTab() === "preferences"}>
               <CategorySection friendId={props.friendId} />

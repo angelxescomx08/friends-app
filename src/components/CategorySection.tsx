@@ -146,7 +146,7 @@ export default function CategorySection(props: Props) {
       <Show when={prefsQuery.isLoading}>
         <div class="text-sm text-gray-500 py-4">Cargando preferencias...</div>
       </Show>
-      <div class="grid grid-cols-2 xl:grid-cols-3 gap-3">
+      <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
         <For each={CATEGORIES}>
           {(cat) => (
             <CategoryCard
