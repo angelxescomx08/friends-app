@@ -61,19 +61,19 @@ export default function Notes(props: Props) {
   return (
     <div class="flex flex-col gap-4">
       <div class="flex items-center justify-between">
-        <h3 class="text-sm font-semibold text-gray-300">Notes</h3>
+        <h3 class="text-sm font-semibold text-gray-300">Notas</h3>
         <button
           onClick={() => setShowAdd(!showAdd())}
           class="text-xs text-indigo-400 hover:text-indigo-300"
         >
-          + Add note
+          + Agregar nota
         </button>
       </div>
 
       <Show when={showAdd()}>
         <div class="rounded-xl bg-gray-800 border border-gray-700 p-4 flex flex-col gap-3">
           <textarea
-            placeholder="Write a note about your friend..."
+            placeholder="Escribe una nota sobre tu amigo..."
             value={newContent()}
             onInput={(e) => setNewContent(e.currentTarget.value)}
             rows={3}
@@ -85,24 +85,24 @@ export default function Notes(props: Props) {
               disabled={addMutation.isPending || !newContent().trim()}
               class="flex-1 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-sm py-2 disabled:opacity-50"
             >
-              Save
+              Guardar
             </button>
             <button
               onClick={() => { setShowAdd(false); setNewContent(""); }}
               class="rounded-lg bg-gray-700 hover:bg-gray-600 text-white text-sm px-4"
             >
-              Cancel
+              Cancelar
             </button>
           </div>
         </div>
       </Show>
 
       <Show when={notesQuery.isLoading}>
-        <div class="text-sm text-gray-500">Loading...</div>
+        <div class="text-sm text-gray-500">Cargando...</div>
       </Show>
 
       <Show when={!notesQuery.isLoading && sorted().length === 0}>
-        <div class="text-sm text-gray-600 italic">No notes yet</div>
+        <div class="text-sm text-gray-600 italic">Aún no hay notas</div>
       </Show>
 
       <div class="flex flex-col gap-2">
@@ -120,13 +120,13 @@ export default function Notes(props: Props) {
                       onClick={() => startEdit(note)}
                       class="text-xs text-gray-400 hover:text-indigo-400"
                     >
-                      Edit
+                      Editar
                     </button>
                     <button
                       onClick={() => deleteMutation.mutate(note.noteId)}
                       class="text-xs text-gray-400 hover:text-red-400"
                     >
-                      Delete
+                      Eliminar
                     </button>
                   </div>
                 </div>
@@ -144,13 +144,13 @@ export default function Notes(props: Props) {
                     disabled={editMutation.isPending || !editContent().trim()}
                     class="rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs px-3 py-1.5 disabled:opacity-50"
                   >
-                    Save
+                    Guardar
                   </button>
                   <button
                     onClick={() => { setEditingId(null); setEditContent(""); }}
                     class="rounded-lg bg-gray-700 hover:bg-gray-600 text-white text-xs px-3 py-1.5"
                   >
-                    Cancel
+                    Cancelar
                   </button>
                 </div>
               </Show>

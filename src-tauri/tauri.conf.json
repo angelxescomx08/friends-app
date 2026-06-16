@@ -26,13 +26,7 @@
       "capabilities": ["default"]
     }
   },
-  "plugins": {
-    "deep-link": {
-      "desktop": {
-        "schemes": ["friendsapp"]
-      }
-    }
-  },
+  "plugins": {},
   "bundle": {
     "active": true,
     "targets": "all",

@@ -1,6 +1,7 @@
 import { CognitoIdentityClient, GetIdCommand, GetCredentialsForIdentityCommand } from "@aws-sdk/client-cognito-identity";
 import { openUrl } from "@tauri-apps/plugin-opener";
-import { onOpenUrl } from "@tauri-apps/plugin-deep-link";
+import { invoke } from "@tauri-apps/api/core";
+import { listen } from "@tauri-apps/api/event";
 import { config } from "./config";
 
 export interface AwsCredentials {
@@ -31,10 +32,10 @@ export async function generatePKCE(): Promise<{ codeVerifier: string; codeChalle
   return { codeVerifier, codeChallenge };
 }
 
-export function buildGoogleAuthUrl(codeChallenge: string, state: string): string {
+export function buildGoogleAuthUrl(codeChallenge: string, state: string, redirectUri: string): string {
   const params = new URLSearchParams({
     client_id: config.googleClientId,
-    redirect_uri: config.redirectUri,
+    redirect_uri: redirectUri,
     response_type: "code",
     scope: "openid email profile",
     code_challenge: codeChallenge,
@@ -46,7 +47,8 @@ export function buildGoogleAuthUrl(codeChallenge: string, state: string): string
 
 export async function exchangeCodeForTokens(
   code: string,
-  codeVerifier: string
+  codeVerifier: string,
+  redirectUri: string
 ): Promise<{ idToken: string; userId: string; email: string; name: string; picture?: string }> {
   const res = await fetch("https://oauth2.googleapis.com/token", {
     method: "POST",
@@ -54,7 +56,8 @@ export async function exchangeCodeForTokens(
     body: new URLSearchParams({
       code,
       client_id: config.googleClientId,
-      redirect_uri: config.redirectUri,
+      client_secret: config.googleClientSecret,
+      redirect_uri: redirectUri,
       grant_type: "authorization_code",
       code_verifier: codeVerifier,
     }),
@@ -66,8 +69,9 @@ export async function exchangeCodeForTokens(
   const data = await res.json();
   const idToken: string = data.id_token;
 
-  // Decode JWT payload (no verification needed - Cognito will verify)
-  const payload = JSON.parse(atob(idToken.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")));
+  const base64 = idToken.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
+  const bytes = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
+  const payload = JSON.parse(new TextDecoder().decode(bytes));
 
   return {
     idToken,
@@ -120,50 +124,46 @@ export async function getCognitoCredentials(
   };
 }
 
-let deepLinkUnlisten: (() => void) | null = null;
-
 export async function startGoogleLogin(
   onSuccess: (creds: AwsCredentials) => void,
   onError: (err: string) => void
 ): Promise<void> {
   const { codeVerifier, codeChallenge } = await generatePKCE();
   const state = base64UrlEncode(crypto.getRandomValues(new Uint8Array(16)).buffer);
-  const authUrl = buildGoogleAuthUrl(codeChallenge, state);
 
-  if (deepLinkUnlisten) {
-    deepLinkUnlisten();
-    deepLinkUnlisten = null;
+  try {
+    const port = await invoke<number>("start_oauth_server");
+    const redirectUri = `http://localhost:${port}`;
+
+    const unlisten = await listen<string>("oauth-callback", async (event) => {
+      unlisten();
+      try {
+        const parsed = new URL(event.payload);
+        const code = parsed.searchParams.get("code");
+        const returnedState = parsed.searchParams.get("state");
+        const error = parsed.searchParams.get("error");
+
+        if (error) throw new Error(`OAuth error: ${error}`);
+        if (returnedState !== state) throw new Error("State mismatch - possible CSRF");
+        if (!code) throw new Error("No code in callback");
+
+        const tokenData = await exchangeCodeForTokens(code, codeVerifier, redirectUri);
+        const creds = await getCognitoCredentials(
+          tokenData.idToken,
+          tokenData.userId,
+          tokenData.email,
+          tokenData.name,
+          tokenData.picture
+        );
+        onSuccess(creds);
+      } catch (e) {
+        onError(e instanceof Error ? e.message : String(e));
+      }
+    });
+
+    const authUrl = buildGoogleAuthUrl(codeChallenge, state, redirectUri);
+    await openUrl(authUrl);
+  } catch (e) {
+    onError(e instanceof Error ? e.message : String(e));
   }
-
-  deepLinkUnlisten = await onOpenUrl(async (urls: string[]) => {
-    if (deepLinkUnlisten) {
-      deepLinkUnlisten();
-      deepLinkUnlisten = null;
-    }
-    try {
-      const url = urls[0];
-      const parsed = new URL(url);
-      const code = parsed.searchParams.get("code");
-      const returnedState = parsed.searchParams.get("state");
-      const error = parsed.searchParams.get("error");
-
-      if (error) throw new Error(`OAuth error: ${error}`);
-      if (returnedState !== state) throw new Error("State mismatch - possible CSRF");
-      if (!code) throw new Error("No code in callback");
-
-      const tokenData = await exchangeCodeForTokens(code, codeVerifier);
-      const creds = await getCognitoCredentials(
-        tokenData.idToken,
-        tokenData.userId,
-        tokenData.email,
-        tokenData.name,
-        tokenData.picture
-      );
-      onSuccess(creds);
-    } catch (e) {
-      onError(e instanceof Error ? e.message : String(e));
-    }
-  });
-
-  await openUrl(authUrl);
 }

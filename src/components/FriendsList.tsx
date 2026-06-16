@@ -83,7 +83,7 @@ export default function FriendsList(props: Props) {
 
   function handleAdd() {
     const name = newName().trim();
-    if (!name) { setAddError("Name is required"); return; }
+    if (!name) { setAddError("El nombre es obligatorio"); return; }
     setAddError("");
     addMutation.mutate(name);
   }
@@ -93,7 +93,7 @@ export default function FriendsList(props: Props) {
       <div class="p-4 border-b border-gray-800">
         <input
           type="text"
-          placeholder="Search friends..."
+          placeholder="Buscar amigos..."
           value={search()}
           onInput={(e) => setSearch(e.currentTarget.value)}
           class="w-full rounded-lg bg-gray-800 border border-gray-700 px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500"
@@ -102,15 +102,15 @@ export default function FriendsList(props: Props) {
 
       <div class="flex-1 overflow-y-auto">
         <Show when={friendsQuery.isLoading}>
-          <div class="flex items-center justify-center h-32 text-gray-500 text-sm">Loading...</div>
+          <div class="flex items-center justify-center h-32 text-gray-500 text-sm">Cargando...</div>
         </Show>
         <Show when={friendsQuery.isError}>
-          <div class="p-4 text-red-400 text-sm">Error loading friends</div>
+          <div class="p-4 text-red-400 text-sm">Error al cargar amigos</div>
         </Show>
         <Show when={!friendsQuery.isLoading && filtered().length === 0 && !showAdd()}>
           <div class="flex flex-col items-center justify-center h-48 text-gray-600 text-sm gap-2">
             <span class="text-3xl">👤</span>
-            <span>No friends yet</span>
+            <span>Aún no hay amigos</span>
           </div>
         </Show>
         <For each={filtered()}>
@@ -157,7 +157,7 @@ export default function FriendsList(props: Props) {
           <div class="mb-2 flex flex-col gap-2">
             <input
               type="text"
-              placeholder="Friend's name"
+              placeholder="Nombre del amigo"
               value={newName()}
               onInput={(e) => setNewName(e.currentTarget.value)}
               onKeyDown={(e) => { if (e.key === "Enter") handleAdd(); if (e.key === "Escape") setShowAdd(false); }}
@@ -173,13 +173,13 @@ export default function FriendsList(props: Props) {
                 disabled={addMutation.isPending}
                 class="flex-1 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-sm py-1.5 disabled:opacity-50"
               >
-                Add
+                Agregar
               </button>
               <button
                 onClick={() => { setShowAdd(false); setNewName(""); setAddError(""); }}
                 class="flex-1 rounded-lg bg-gray-700 hover:bg-gray-600 text-white text-sm py-1.5"
               >
-                Cancel
+                Cancelar
               </button>
             </div>
           </div>
@@ -189,7 +189,7 @@ export default function FriendsList(props: Props) {
             onClick={() => setShowAdd(true)}
             class="w-full rounded-lg border border-dashed border-gray-700 hover:border-indigo-500 text-gray-500 hover:text-indigo-400 text-sm py-2 transition-colors"
           >
-            + Add friend
+            + Agregar amigo
           </button>
         </Show>
       </div>

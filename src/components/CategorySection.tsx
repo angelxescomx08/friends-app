@@ -9,18 +9,18 @@ interface Props {
 }
 
 const CATEGORY_META: Record<Category, { icon: string; label: string }> = {
-  food: { icon: "🍕", label: "Food" },
-  drink: { icon: "🥤", label: "Drinks" },
-  music: { icon: "🎵", label: "Music" },
-  movies: { icon: "🎬", label: "Movies" },
+  food: { icon: "🍕", label: "Comida" },
+  drink: { icon: "🥤", label: "Bebidas" },
+  music: { icon: "🎵", label: "Música" },
+  movies: { icon: "🎬", label: "Películas" },
   series: { icon: "📺", label: "Series" },
-  books: { icon: "📚", label: "Books" },
-  games: { icon: "🎮", label: "Games" },
-  places: { icon: "📍", label: "Places" },
-  colors: { icon: "🎨", label: "Colors" },
-  gifts: { icon: "🎁", label: "Gift Ideas" },
-  hobbies: { icon: "⚡", label: "Hobbies" },
-  dislikes: { icon: "👎", label: "Dislikes" },
+  books: { icon: "📚", label: "Libros" },
+  games: { icon: "🎮", label: "Juegos" },
+  places: { icon: "📍", label: "Lugares" },
+  colors: { icon: "🎨", label: "Colores" },
+  gifts: { icon: "🎁", label: "Ideas de regalo" },
+  hobbies: { icon: "⚡", label: "Pasatiempos" },
+  dislikes: { icon: "👎", label: "Disgustos" },
 };
 
 interface CategoryCardProps {
@@ -54,7 +54,7 @@ function CategoryCard(props: CategoryCardProps) {
         <button
           onClick={() => setAdding(true)}
           class="text-gray-500 hover:text-indigo-400 text-lg leading-none"
-          title="Add item"
+          title="Agregar elemento"
         >
           +
         </button>
@@ -75,7 +75,7 @@ function CategoryCard(props: CategoryCardProps) {
           )}
         </For>
         <Show when={props.items.length === 0 && !adding()}>
-          <span class="text-xs text-gray-600 italic">None added</span>
+          <span class="text-xs text-gray-600 italic">Sin agregar</span>
         </Show>
       </div>
 
@@ -87,7 +87,7 @@ function CategoryCard(props: CategoryCardProps) {
             onInput={(e) => setInput(e.currentTarget.value)}
             onKeyDown={(e) => { if (e.key === "Enter") handleAdd(); if (e.key === "Escape") { setAdding(false); setInput(""); } }}
             autofocus
-            placeholder={`Add ${meta.label.toLowerCase()}...`}
+            placeholder={`Agregar ${meta.label.toLowerCase()}...`}
             class="flex-1 rounded-lg bg-gray-900 border border-gray-600 px-2 py-1 text-xs text-white placeholder-gray-600 focus:outline-none focus:border-indigo-500"
           />
           <button
@@ -95,7 +95,7 @@ function CategoryCard(props: CategoryCardProps) {
             disabled={props.saving}
             class="rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs px-3 disabled:opacity-50"
           >
-            Add
+            Agregar
           </button>
           <button
             onClick={() => { setAdding(false); setInput(""); }}
@@ -144,7 +144,7 @@ export default function CategorySection(props: Props) {
   return (
     <div>
       <Show when={prefsQuery.isLoading}>
-        <div class="text-sm text-gray-500 py-4">Loading preferences...</div>
+        <div class="text-sm text-gray-500 py-4">Cargando preferencias...</div>
       </Show>
       <div class="grid grid-cols-2 xl:grid-cols-3 gap-3">
         <For each={CATEGORIES}>

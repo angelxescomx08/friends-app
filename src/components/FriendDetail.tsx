@@ -14,10 +14,10 @@ interface Props {
 type Tab = "preferences" | "dates" | "notes" | "reminders";
 
 const TABS: { id: Tab; label: string; icon: string }[] = [
-  { id: "preferences", label: "Preferences", icon: "⭐" },
-  { id: "dates", label: "Dates", icon: "📅" },
-  { id: "notes", label: "Notes", icon: "📝" },
-  { id: "reminders", label: "Reminders", icon: "🔔" },
+  { id: "preferences", label: "Preferencias", icon: "⭐" },
+  { id: "dates", label: "Fechas", icon: "📅" },
+  { id: "notes", label: "Notas", icon: "📝" },
+  { id: "reminders", label: "Recordatorios", icon: "🔔" },
 ];
 
 function getInitials(name: string): string {
@@ -63,11 +63,11 @@ export default function FriendDetail(props: Props) {
   return (
     <div class="flex flex-col h-full">
       <Show when={friendsQuery.isLoading}>
-        <div class="flex items-center justify-center h-full text-gray-500">Loading...</div>
+        <div class="flex items-center justify-center h-full text-gray-500">Cargando...</div>
       </Show>
 
       <Show when={!friendsQuery.isLoading && !friend()}>
-        <div class="flex items-center justify-center h-full text-gray-600">Friend not found</div>
+        <div class="flex items-center justify-center h-full text-gray-600">Amigo no encontrado</div>
       </Show>
 
       <Show when={friend()}>
@@ -112,7 +112,7 @@ export default function FriendDetail(props: Props) {
                   disabled={updateMutation.isPending}
                   class="rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs px-3 py-1.5"
                 >
-                  Save
+                  Guardar
                 </button>
                 <button
                   onClick={() => setEditingName(false)}

@@ -21,7 +21,7 @@ export default function Login() {
         }
       );
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Login failed");
+      setError(e instanceof Error ? e.message : "Error al iniciar sesión");
       setLoading(false);
     }
   }
@@ -33,7 +33,7 @@ export default function Login() {
           <div class="text-5xl">👥</div>
           <h1 class="text-3xl font-bold text-white tracking-tight">Friends App</h1>
           <p class="text-gray-400 text-sm text-center">
-            Remember everything that matters about your friends
+            Recuerda todo lo importante sobre tus amigos
           </p>
         </div>
 
@@ -66,11 +66,11 @@ export default function Login() {
               d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
             />
           </svg>
-          {loading() ? "Opening browser..." : "Continue with Google"}
+          {loading() ? "Abriendo navegador..." : "Continuar con Google"}
         </button>
 
         <p class="text-xs text-gray-600 text-center">
-          A browser window will open to complete sign-in
+          Se abrirá una ventana del navegador para iniciar sesión
         </p>
       </div>
     </div>

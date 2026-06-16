@@ -71,12 +71,12 @@ export default function Reminders(props: Props) {
   return (
     <div class="flex flex-col gap-4">
       <div class="flex items-center justify-between">
-        <h3 class="text-sm font-semibold text-gray-300">Reminders</h3>
+        <h3 class="text-sm font-semibold text-gray-300">Recordatorios</h3>
         <button
           onClick={() => setShowAdd(!showAdd())}
           class="text-xs text-indigo-400 hover:text-indigo-300"
         >
-          + Add reminder
+          + Agregar recordatorio
         </button>
       </div>
 
@@ -84,14 +84,14 @@ export default function Reminders(props: Props) {
         <div class="rounded-xl bg-gray-800 border border-gray-700 p-4 flex flex-col gap-3">
           <input
             type="text"
-            placeholder="Reminder title"
+            placeholder="Título del recordatorio"
             value={rTitle()}
             onInput={(e) => setRTitle(e.currentTarget.value)}
             class="w-full rounded-lg bg-gray-900 border border-gray-600 px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500"
           />
           <input
             type="text"
-            placeholder="Description (optional)"
+            placeholder="Descripción (opcional)"
             value={rDesc()}
             onInput={(e) => setRDesc(e.currentTarget.value)}
             class="w-full rounded-lg bg-gray-900 border border-gray-600 px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500"
@@ -108,24 +108,24 @@ export default function Reminders(props: Props) {
               disabled={addMutation.isPending || !rTitle().trim() || !rDate()}
               class="flex-1 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-sm py-2 disabled:opacity-50"
             >
-              Save
+              Guardar
             </button>
             <button
               onClick={() => { setShowAdd(false); setRTitle(""); setRDesc(""); setRDate(""); }}
               class="rounded-lg bg-gray-700 hover:bg-gray-600 text-white text-sm px-4"
             >
-              Cancel
+              Cancelar
             </button>
           </div>
         </div>
       </Show>
 
       <Show when={remindersQuery.isLoading}>
-        <div class="text-sm text-gray-500">Loading...</div>
+        <div class="text-sm text-gray-500">Cargando...</div>
       </Show>
 
       <Show when={!remindersQuery.isLoading && sorted().length === 0}>
-        <div class="text-sm text-gray-600 italic">No reminders yet</div>
+        <div class="text-sm text-gray-600 italic">Aún no hay recordatorios</div>
       </Show>
 
       <div class="flex flex-col gap-2">
@@ -164,7 +164,7 @@ export default function Reminders(props: Props) {
         </For>
 
         <Show when={done().length > 0}>
-          <div class="text-xs text-gray-600 mt-2 mb-1">Completed</div>
+          <div class="text-xs text-gray-600 mt-2 mb-1">Completados</div>
           <For each={done()}>
             {(r: Reminder) => (
               <div class="group flex items-start gap-3 rounded-xl bg-gray-900 border border-gray-800 px-4 py-3 opacity-60">

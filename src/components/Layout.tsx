@@ -67,8 +67,8 @@ export default function Layout() {
           <div class="flex flex-col items-center justify-center h-full gap-4 text-gray-600">
             <span class="text-6xl">👈</span>
             <div class="text-center">
-              <div class="text-lg font-medium">Select a friend</div>
-              <div class="text-sm mt-1">or add a new one to get started</div>
+              <div class="text-lg font-medium">Selecciona un amigo</div>
+              <div class="text-sm mt-1">o agrega uno nuevo para comenzar</div>
             </div>
           </div>
         </Show>

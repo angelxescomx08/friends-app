@@ -9,7 +9,7 @@ interface Props {
 
 function formatDate(dateStr: string): string {
   const [, mm, dd] = dateStr.split("-");
-  const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  const months = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
   return `${months[parseInt(mm) - 1]} ${parseInt(dd)}`;
 }
 
@@ -66,12 +66,12 @@ export default function ImportantDates(props: Props) {
   return (
     <div class="flex flex-col gap-4">
       <div class="flex items-center justify-between">
-        <h3 class="text-sm font-semibold text-gray-300">Important Dates</h3>
+        <h3 class="text-sm font-semibold text-gray-300">Fechas importantes</h3>
         <button
           onClick={() => setShowAdd(!showAdd())}
           class="text-xs text-indigo-400 hover:text-indigo-300"
         >
-          + Add date
+          + Agregar fecha
         </button>
       </div>
 
@@ -79,7 +79,7 @@ export default function ImportantDates(props: Props) {
         <div class="rounded-xl bg-gray-800 border border-gray-700 p-4 flex flex-col gap-3">
           <input
             type="text"
-            placeholder="Title (e.g. Birthday, Anniversary)"
+            placeholder="Título (ej. Cumpleaños, Aniversario)"
             value={title()}
             onInput={(e) => setTitle(e.currentTarget.value)}
             class="w-full rounded-lg bg-gray-900 border border-gray-600 px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500"
@@ -97,7 +97,7 @@ export default function ImportantDates(props: Props) {
               onChange={(e) => setRecurring(e.currentTarget.checked)}
               class="rounded"
             />
-            Recurring every year
+            Se repite cada año
           </label>
           <div class="flex gap-2">
             <button
@@ -105,24 +105,24 @@ export default function ImportantDates(props: Props) {
               disabled={addMutation.isPending || !title().trim() || !date()}
               class="flex-1 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-sm py-2 disabled:opacity-50"
             >
-              Save
+              Guardar
             </button>
             <button
               onClick={() => { setShowAdd(false); setTitle(""); setDate(""); setRecurring(false); }}
               class="rounded-lg bg-gray-700 hover:bg-gray-600 text-white text-sm px-4"
             >
-              Cancel
+              Cancelar
             </button>
           </div>
         </div>
       </Show>
 
       <Show when={datesQuery.isLoading}>
-        <div class="text-sm text-gray-500">Loading...</div>
+        <div class="text-sm text-gray-500">Cargando...</div>
       </Show>
 
       <Show when={!datesQuery.isLoading && sorted().length === 0}>
-        <div class="text-sm text-gray-600 italic">No important dates added</div>
+        <div class="text-sm text-gray-600 italic">Sin fechas importantes</div>
       </Show>
 
       <div class="flex flex-col gap-2">
@@ -132,13 +132,13 @@ export default function ImportantDates(props: Props) {
             return (
               <div class="group flex items-center gap-3 rounded-xl bg-gray-800 border border-gray-700 px-4 py-3">
                 <div class="flex-shrink-0 text-center w-12">
-                  <div class="text-xs font-bold text-indigo-400">{days === 0 ? "TODAY" : `${days}d`}</div>
+                  <div class="text-xs font-bold text-indigo-400">{days === 0 ? "HOY" : `${days}d`}</div>
                   <div class="text-xs text-gray-500">{formatDate(d.date)}</div>
                 </div>
                 <div class="flex-1">
                   <div class="text-sm font-medium text-white">{d.title}</div>
                   <Show when={d.recurring}>
-                    <span class="text-xs text-gray-500">🔄 Yearly</span>
+                    <span class="text-xs text-gray-500">🔄 Anual</span>
                   </Show>
                 </div>
                 <button

@@ -19,7 +19,7 @@ export default function App() {
     <QueryClientProvider client={queryClient}>
       <Show when={!authLoading()} fallback={
         <div class="flex h-screen w-screen items-center justify-center bg-gray-950">
-          <div class="text-gray-500 text-sm">Loading...</div>
+          <div class="text-gray-500 text-sm">Cargando...</div>
         </div>
       }>
         <Show when={credentials()} fallback={<Login />}>
