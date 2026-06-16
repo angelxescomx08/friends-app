@@ -28,9 +28,11 @@ export interface Friend {
 export async function listFriends(ctx: DynamoContext, userId: string): Promise<Friend[]> {
   const res = await ctx.AppTable.build(QueryCommand)
     .query({ partition: `USER#${userId}`, range: { beginsWith: "FRIEND#" } })
-    .options({ filters: { entity: "Friend" } })
     .send();
-  return (res.Items ?? []) as unknown as Friend[];
+  // Only return Friend items: have name+friendId, no sub-entity fields
+  return ((res.Items ?? []) as unknown as Friend[]).filter(
+    (f) => !!f.name && !!f.friendId && !("dateId" in f) && !("noteId" in f) && !("reminderId" in f) && !("category" in f)
+  );
 }
 
 export async function putFriend(
@@ -66,7 +68,28 @@ export async function updateFriend(
 }
 
 export async function deleteFriend(ctx: DynamoContext, userId: string, friendId: string): Promise<void> {
-  await ctx.FriendEntity.build(DeleteItemCommand).key({ userId, friendId }).send();
+  const [dates, notes, prefs, reminders] = await Promise.all([
+    listDates(ctx, userId, friendId),
+    listNotes(ctx, userId, friendId),
+    listPreferences(ctx, userId, friendId),
+    listReminders(ctx, userId, friendId),
+  ]);
+
+  await Promise.all([
+    ...dates.map((d) =>
+      ctx.ImportantDateEntity.build(DeleteItemCommand).key({ userId, friendId, dateId: d.dateId }).send()
+    ),
+    ...notes.map((n) =>
+      ctx.NoteEntity.build(DeleteItemCommand).key({ userId, friendId, noteId: n.noteId }).send()
+    ),
+    ...prefs.map((p) =>
+      ctx.PreferenceEntity.build(DeleteItemCommand).key({ userId, friendId, category: p.category }).send()
+    ),
+    ...reminders.map((r) =>
+      ctx.ReminderEntity.build(DeleteItemCommand).key({ userId, friendId, reminderId: r.reminderId }).send()
+    ),
+    ctx.FriendEntity.build(DeleteItemCommand).key({ userId, friendId }).send(),
+  ]);
 }
 
 // ── Preferences ───────────────────────────────────────────────────────────────
@@ -86,7 +109,6 @@ export async function listPreferences(
 ): Promise<Preference[]> {
   const res = await ctx.AppTable.build(QueryCommand)
     .query({ partition: `USER#${userId}`, range: { beginsWith: `FRIEND#${friendId}#PREF#` } })
-    .options({ filters: { entity: "Preference" } })
     .send();
   return (res.Items ?? []) as unknown as Preference[];
 }
@@ -122,7 +144,6 @@ export async function listDates(
 ): Promise<ImportantDate[]> {
   const res = await ctx.AppTable.build(QueryCommand)
     .query({ partition: `USER#${userId}`, range: { beginsWith: `FRIEND#${friendId}#DATE#` } })
-    .options({ filters: { entity: "ImportantDate" } })
     .send();
   return (res.Items ?? []) as unknown as ImportantDate[];
 }
@@ -175,7 +196,6 @@ export async function listNotes(
 ): Promise<Note[]> {
   const res = await ctx.AppTable.build(QueryCommand)
     .query({ partition: `USER#${userId}`, range: { beginsWith: `FRIEND#${friendId}#NOTE#` } })
-    .options({ filters: { entity: "Note" } })
     .send();
   return (res.Items ?? []) as unknown as Note[];
 }
@@ -243,7 +263,6 @@ export async function listReminders(
 ): Promise<Reminder[]> {
   const res = await ctx.AppTable.build(QueryCommand)
     .query({ partition: `USER#${userId}`, range: { beginsWith: `FRIEND#${friendId}#REMINDER#` } })
-    .options({ filters: { entity: "Reminder" } })
     .send();
   return (res.Items ?? []) as unknown as Reminder[];
 }

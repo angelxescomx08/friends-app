@@ -50,6 +50,7 @@ export default function Layout() {
           <FriendsList
             selectedFriendId={selectedFriendId()}
             onSelect={(id) => setSelectedFriendId(id)}
+            onDeselect={() => setSelectedFriendId(null)}
           />
         </div>
       </div>

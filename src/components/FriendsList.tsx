@@ -7,6 +7,7 @@ import ConfirmDialog from "./ConfirmDialog";
 interface Props {
   selectedFriendId: string | null;
   onSelect: (id: string) => void;
+  onDeselect: () => void;
 }
 
 function getInitials(name: string): string {
@@ -51,6 +52,7 @@ export default function FriendsList(props: Props) {
   const [newName, setNewName] = createSignal("");
   const [addError, setAddError] = createSignal("");
   const [confirmDeleteId, setConfirmDeleteId] = createSignal<string | null>(null);
+  const [deleteError, setDeleteError] = createSignal("");
 
   const userId = () => credentials()?.userId ?? "";
 
@@ -73,9 +75,17 @@ export default function FriendsList(props: Props) {
 
   const deleteMutation = createMutation(() => ({
     mutationFn: (friendId: string) => deleteFriend(dynamoCtx()!, userId(), friendId),
-    onSuccess: () => {
+    onSuccess: (_, friendId) => {
+      setDeleteError("");
       setConfirmDeleteId(null);
       qc.invalidateQueries({ queryKey: ["friends", userId()] });
+      if (props.selectedFriendId === friendId) {
+        props.onDeselect();
+      }
+    },
+    onError: (err: unknown) => {
+      const msg = err instanceof Error ? err.message : "Error al eliminar";
+      setDeleteError(msg);
     },
   }));
 
@@ -201,10 +211,10 @@ export default function FriendsList(props: Props) {
 
       <ConfirmDialog
         open={!!confirmDeleteId()}
-        message="Esta acción no se puede deshacer."
+        message={deleteError() || "Esta acción no se puede deshacer."}
         isPending={deleteMutation.isPending}
-        onConfirm={() => deleteMutation.mutate(confirmDeleteId()!)}
-        onCancel={() => setConfirmDeleteId(null)}
+        onConfirm={() => { setDeleteError(""); deleteMutation.mutate(confirmDeleteId()!); }}
+        onCancel={() => { setDeleteError(""); setConfirmDeleteId(null); }}
       />
     </div>
   );
