@@ -3,3 +3,6 @@ dist
 .env
 *.jks
 *.keystore
+friends-app-release.apk
+friends-app-release-signed.apk
+*.idsig
