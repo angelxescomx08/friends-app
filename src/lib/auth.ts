@@ -2,6 +2,8 @@ import { CognitoIdentityClient, GetIdCommand, GetCredentialsForIdentityCommand }
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
+import { platform } from "@tauri-apps/plugin-os";
+import { onOpenUrl } from "@tauri-apps/plugin-deep-link";
 import { config } from "./config";
 
 export interface AwsCredentials {
@@ -14,6 +16,8 @@ export interface AwsCredentials {
   name: string;
   picture?: string;
 }
+
+const MOBILE_REDIRECT_URI = "friendsapp://oauth-callback";
 
 function base64UrlEncode(buffer: ArrayBuffer): string {
   return btoa(String.fromCharCode(...new Uint8Array(buffer)))
@@ -124,6 +128,38 @@ export async function getCognitoCredentials(
   };
 }
 
+async function handleOAuthCallback(
+  callbackUrl: string,
+  state: string,
+  codeVerifier: string,
+  redirectUri: string,
+  onSuccess: (creds: AwsCredentials) => void,
+  onError: (err: string) => void
+) {
+  try {
+    const parsed = new URL(callbackUrl);
+    const code = parsed.searchParams.get("code");
+    const returnedState = parsed.searchParams.get("state");
+    const error = parsed.searchParams.get("error");
+
+    if (error) throw new Error(`OAuth error: ${error}`);
+    if (returnedState !== state) throw new Error("State mismatch - possible CSRF");
+    if (!code) throw new Error("No code in callback");
+
+    const tokenData = await exchangeCodeForTokens(code, codeVerifier, redirectUri);
+    const creds = await getCognitoCredentials(
+      tokenData.idToken,
+      tokenData.userId,
+      tokenData.email,
+      tokenData.name,
+      tokenData.picture
+    );
+    onSuccess(creds);
+  } catch (e) {
+    onError(e instanceof Error ? e.message : String(e));
+  }
+}
+
 export async function startGoogleLogin(
   onSuccess: (creds: AwsCredentials) => void,
   onError: (err: string) => void
@@ -132,37 +168,33 @@ export async function startGoogleLogin(
   const state = base64UrlEncode(crypto.getRandomValues(new Uint8Array(16)).buffer);
 
   try {
-    const port = await invoke<number>("start_oauth_server");
-    const redirectUri = `http://localhost:${port}`;
+    const currentPlatform = await platform();
+    const isMobile = currentPlatform === "android" || currentPlatform === "ios";
 
-    const unlisten = await listen<string>("oauth-callback", async (event) => {
-      unlisten();
-      try {
-        const parsed = new URL(event.payload);
-        const code = parsed.searchParams.get("code");
-        const returnedState = parsed.searchParams.get("state");
-        const error = parsed.searchParams.get("error");
+    if (isMobile) {
+      const redirectUri = MOBILE_REDIRECT_URI;
 
-        if (error) throw new Error(`OAuth error: ${error}`);
-        if (returnedState !== state) throw new Error("State mismatch - possible CSRF");
-        if (!code) throw new Error("No code in callback");
+      const unlisten = await onOpenUrl(async (urls) => {
+        const url = urls[0];
+        if (!url) return;
+        unlisten();
+        await handleOAuthCallback(url, state, codeVerifier, redirectUri, onSuccess, onError);
+      });
 
-        const tokenData = await exchangeCodeForTokens(code, codeVerifier, redirectUri);
-        const creds = await getCognitoCredentials(
-          tokenData.idToken,
-          tokenData.userId,
-          tokenData.email,
-          tokenData.name,
-          tokenData.picture
-        );
-        onSuccess(creds);
-      } catch (e) {
-        onError(e instanceof Error ? e.message : String(e));
-      }
-    });
+      const authUrl = buildGoogleAuthUrl(codeChallenge, state, redirectUri);
+      await openUrl(authUrl);
+    } else {
+      const port = await invoke<number>("start_oauth_server");
+      const redirectUri = `http://localhost:${port}`;
 
-    const authUrl = buildGoogleAuthUrl(codeChallenge, state, redirectUri);
-    await openUrl(authUrl);
+      const unlisten = await listen<string>("oauth-callback", async (event) => {
+        unlisten();
+        await handleOAuthCallback(event.payload, state, codeVerifier, redirectUri, onSuccess, onError);
+      });
+
+      const authUrl = buildGoogleAuthUrl(codeChallenge, state, redirectUri);
+      await openUrl(authUrl);
+    }
   } catch (e) {
     onError(e instanceof Error ? e.message : String(e));
   }

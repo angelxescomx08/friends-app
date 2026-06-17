@@ -26,7 +26,16 @@
       "capabilities": ["default"]
     }
   },
-  "plugins": {},
+  "plugins": {
+    "deep-link": {
+      "mobile": [
+        {
+          "scheme": ["friendsapp"],
+          "host": "oauth-callback"
+        }
+      ]
+    }
+  },
   "bundle": {
     "active": true,
     "targets": "all",

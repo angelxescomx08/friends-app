@@ -1,7 +1,11 @@
+#[cfg(desktop)]
 use std::io::{Read, Write};
+#[cfg(desktop)]
 use std::net::TcpListener;
+#[cfg(desktop)]
 use tauri::{AppHandle, Emitter};
 
+#[cfg(desktop)]
 #[tauri::command]
 async fn start_oauth_server(app: AppHandle) -> Result<u16, String> {
     let listener = TcpListener::bind("127.0.0.1:0").map_err(|e| e.to_string())?;
@@ -36,10 +40,19 @@ async fn start_oauth_server(app: AppHandle) -> Result<u16, String> {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    tauri::Builder::default()
+    let builder = tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_store::Builder::default().build())
-        .invoke_handler(tauri::generate_handler![start_oauth_server])
+        .plugin(tauri_plugin_deep_link::init())
+        .plugin(tauri_plugin_os::init());
+
+    #[cfg(desktop)]
+    let builder = builder.invoke_handler(tauri::generate_handler![start_oauth_server]);
+
+    #[cfg(mobile)]
+    let builder = builder.invoke_handler(tauri::generate_handler![]);
+
+    builder
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
