@@ -27,7 +27,7 @@ export default function Login() {
   }
 
   return (
-    <div class="flex h-screen w-screen items-center justify-center bg-gray-950">
+    <div class="flex h-screen w-screen items-center justify-center bg-gray-950 safe-top safe-bottom">
       <div class="flex flex-col items-center gap-8 rounded-2xl bg-gray-900 p-12 shadow-2xl border border-gray-800 w-96">
         <div class="flex flex-col items-center gap-3">
           <div class="text-5xl">👥</div>

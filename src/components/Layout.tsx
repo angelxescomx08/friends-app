@@ -13,7 +13,7 @@ export default function Layout() {
   return (
     <div class="flex h-screen w-screen bg-gray-950 text-white overflow-hidden">
       {/* Sidebar — full screen on mobile cuando no hay amigo seleccionado */}
-      <div class={`flex flex-col flex-shrink-0 bg-gray-900 border-r border-gray-800 w-full md:w-72 ${selectedFriendId() ? "hidden md:flex" : "flex"}`}>
+      <div class={`flex flex-col flex-shrink-0 bg-gray-900 border-r border-gray-800 w-full md:w-72 safe-top ${selectedFriendId() ? "hidden md:flex" : "flex"}`}>
         {/* User header */}
         <div class="flex items-center gap-3 px-4 py-4 border-b border-gray-800">
           <Show when={credentials()?.picture}>

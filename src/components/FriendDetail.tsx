@@ -73,7 +73,7 @@ export default function FriendDetail(props: Props) {
 
       <Show when={friend()}>
         {/* Header */}
-        <div class="flex items-center gap-3 px-4 py-4 border-b border-gray-800">
+        <div class="flex items-center gap-3 px-4 py-4 border-b border-gray-800" style={{ "padding-top": "calc(env(safe-area-inset-top, 0px) + 1rem)" }}>
           <Show when={props.onBack}>
             <button
               onClick={props.onBack}
@@ -149,7 +149,7 @@ export default function FriendDetail(props: Props) {
         </div>
 
         {/* Tab content */}
-        <div class="flex-1 overflow-y-auto p-4 md:p-6">
+        <div class="flex-1 overflow-y-auto p-4 md:p-6" style={{ "padding-bottom": "calc(env(safe-area-inset-bottom, 0px) + 1rem)" }}>
           <Switch>
             <Match when={activeTab() === "preferences"}>
               <CategorySection friendId={props.friendId} />

@@ -167,7 +167,7 @@ export default function FriendsList(props: Props) {
         </For>
       </div>
 
-      <div class="p-3 border-t border-gray-800">
+      <div class="p-3 border-t border-gray-800" style={{ "padding-bottom": "calc(env(safe-area-inset-bottom, 0px) + 0.75rem)" }}>
         <Show when={showAdd()}>
           <div class="mb-2 flex flex-col gap-2">
             <input
