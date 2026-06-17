@@ -65,7 +65,7 @@ Los instaladores quedan en `src-tauri/target/release/bundle/`.
 
 ---
 
-## Build — Android (APK / AAB)
+## Build — Android
 
 ### Inicializar proyecto Android (solo la primera vez)
 
@@ -73,44 +73,36 @@ Los instaladores quedan en `src-tauri/target/release/bundle/`.
 pnpm tauri android init
 ```
 
-### APK de debug
+### APK de debug (instalación rápida)
 
-```bash
+```powershell
 pnpm tauri android build --debug
 ```
 
-Salida: `src-tauri/gen/android/app/build/outputs/apk/universal/debug/app-universal-debug.apk`
+Instala directo: `src-tauri\gen\android\app\build\outputs\apk\universal\debug\app-universal-debug.apk`
 
-### APK de release (sin firmar)
+### APK de release firmado (para distribuir)
 
-```bash
+Ejecuta estos 3 comandos en orden:
+
+```powershell
 pnpm tauri android build
 ```
 
-Salida: `src-tauri/gen/android/app/build/outputs/apk/universal/release/app-universal-release-unsigned.apk`
-
-### AAB de release (para Google Play)
-
-```bash
-pnpm tauri android build --aab
+```powershell
+& "$env:ANDROID_HOME\build-tools\36.0.0\zipalign.exe" -v 4 "src-tauri\gen\android\app\build\outputs\apk\universal\release\app-universal-release-unsigned.apk"friends-app-release.apk"
 ```
-
-Salida: `src-tauri/gen/android/app/build/outputs/bundle/universalRelease/app-universal-release.aab`
-
-### Firmar el APK de release
 
 ```powershell
-# 1. Generar keystore (solo una vez)
-keytool -genkey -v -keystore my-release-key.jks -keyalg RSA -keysize 2048 -validity 10000 -alias my-key-alias
-
-# 2. Alinear el APK (debe hacerse ANTES de firmar)
-& "$env:ANDROID_HOME\build-tools\36.0.0\zipalign.exe" -v 4 src-tauri\gen\android\app\build\outputs\apk\universal\release\app-universal-release-unsigned.apk friends-app-release.apk
-
-# 3. Firmar con apksigner (genera firma v2/v3, compatible con Android 7+)
-& "$env:ANDROID_HOME\build-tools\36.0.0\apksigner.bat" sign --ks my-release-key.jks --out friends-app-release-signed.apk friends-app-release.apk
+& "$env:ANDROID_HOME\build-tools\36.0.0\apksigner.bat" sign --ks "my-release-key.jks" --out "friends-app-release-signed.apk" "friends-app-release.apk"
 ```
 
-El APK instalable final es `friends-app-release-signed.apk`.
+El APK instalable queda en la raíz del proyecto: `friends-app-release-signed.apk`
+
+> El keystore `my-release-key.jks` se genera una sola vez con:
+> ```powershell
+> keytool -genkey -v -keystore my-release-key.jks -keyalg RSA -keysize 2048 -validity 10000 -alias my-key-alias
+> ```
 
 ---
 

@@ -2,8 +2,6 @@ import { CognitoIdentityClient, GetIdCommand, GetCredentialsForIdentityCommand }
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
-import { platform } from "@tauri-apps/plugin-os";
-import { onOpenUrl } from "@tauri-apps/plugin-deep-link";
 import { config } from "./config";
 
 export interface AwsCredentials {
@@ -16,8 +14,6 @@ export interface AwsCredentials {
   name: string;
   picture?: string;
 }
-
-const MOBILE_REDIRECT_URI = "friendsapp://oauth-callback";
 
 function base64UrlEncode(buffer: ArrayBuffer): string {
   return btoa(String.fromCharCode(...new Uint8Array(buffer)))
@@ -54,23 +50,18 @@ export async function exchangeCodeForTokens(
   codeVerifier: string,
   redirectUri: string
 ): Promise<{ idToken: string; userId: string; email: string; name: string; picture?: string }> {
-  const res = await fetch("https://oauth2.googleapis.com/token", {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({
-      code,
-      client_id: config.googleClientId,
-      client_secret: config.googleClientSecret,
-      redirect_uri: redirectUri,
-      grant_type: "authorization_code",
-      code_verifier: codeVerifier,
-    }),
+  const data = await invoke<Record<string, string>>("exchange_oauth_code", {
+    code,
+    codeVerifier,
+    redirectUri,
+    clientId: config.googleClientId,
+    clientSecret: config.googleClientSecret,
   });
-  if (!res.ok) {
-    const err = await res.text();
-    throw new Error(`Token exchange failed: ${err}`);
+
+  if (data.error) {
+    throw new Error(`Token exchange failed: ${JSON.stringify(data)}`);
   }
-  const data = await res.json();
+
   const idToken: string = data.id_token;
 
   const base64 = idToken.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
@@ -168,33 +159,16 @@ export async function startGoogleLogin(
   const state = base64UrlEncode(crypto.getRandomValues(new Uint8Array(16)).buffer);
 
   try {
-    const currentPlatform = await platform();
-    const isMobile = currentPlatform === "android" || currentPlatform === "ios";
+    const port = await invoke<number>("start_oauth_server");
+    const redirectUri = `http://localhost:${port}`;
 
-    if (isMobile) {
-      const redirectUri = MOBILE_REDIRECT_URI;
+    const unlisten = await listen<string>("oauth-callback", async (event) => {
+      unlisten();
+      await handleOAuthCallback(event.payload, state, codeVerifier, redirectUri, onSuccess, onError);
+    });
 
-      const unlisten = await onOpenUrl(async (urls) => {
-        const url = urls[0];
-        if (!url) return;
-        unlisten();
-        await handleOAuthCallback(url, state, codeVerifier, redirectUri, onSuccess, onError);
-      });
-
-      const authUrl = buildGoogleAuthUrl(codeChallenge, state, redirectUri);
-      await openUrl(authUrl);
-    } else {
-      const port = await invoke<number>("start_oauth_server");
-      const redirectUri = `http://localhost:${port}`;
-
-      const unlisten = await listen<string>("oauth-callback", async (event) => {
-        unlisten();
-        await handleOAuthCallback(event.payload, state, codeVerifier, redirectUri, onSuccess, onError);
-      });
-
-      const authUrl = buildGoogleAuthUrl(codeChallenge, state, redirectUri);
-      await openUrl(authUrl);
-    }
+    const authUrl = buildGoogleAuthUrl(codeChallenge, state, redirectUri);
+    await openUrl(authUrl);
   } catch (e) {
     onError(e instanceof Error ? e.message : String(e));
   }

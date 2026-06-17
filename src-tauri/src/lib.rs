@@ -1,11 +1,8 @@
-#[cfg(desktop)]
 use std::io::{Read, Write};
-#[cfg(desktop)]
 use std::net::TcpListener;
-#[cfg(desktop)]
 use tauri::{AppHandle, Emitter};
+use std::collections::HashMap;
 
-#[cfg(desktop)]
 #[tauri::command]
 async fn start_oauth_server(app: AppHandle) -> Result<u16, String> {
     let listener = TcpListener::bind("127.0.0.1:0").map_err(|e| e.to_string())?;
@@ -38,21 +35,42 @@ async fn start_oauth_server(app: AppHandle) -> Result<u16, String> {
     Ok(port)
 }
 
+#[tauri::command]
+async fn exchange_oauth_code(
+    code: String,
+    code_verifier: String,
+    redirect_uri: String,
+    client_id: String,
+    client_secret: String,
+) -> Result<serde_json::Value, String> {
+    let client = reqwest::Client::new();
+    let mut params = HashMap::new();
+    params.insert("code", code.as_str());
+    params.insert("code_verifier", code_verifier.as_str());
+    params.insert("redirect_uri", redirect_uri.as_str());
+    params.insert("client_id", client_id.as_str());
+    params.insert("client_secret", client_secret.as_str());
+    params.insert("grant_type", "authorization_code");
+
+    let res = client
+        .post("https://oauth2.googleapis.com/token")
+        .form(&params)
+        .send()
+        .await
+        .map_err(|e| e.to_string())?;
+
+    let json: serde_json::Value = res.json().await.map_err(|e| e.to_string())?;
+    Ok(json)
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    let builder = tauri::Builder::default()
+    tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_store::Builder::default().build())
         .plugin(tauri_plugin_deep_link::init())
-        .plugin(tauri_plugin_os::init());
-
-    #[cfg(desktop)]
-    let builder = builder.invoke_handler(tauri::generate_handler![start_oauth_server]);
-
-    #[cfg(mobile)]
-    let builder = builder.invoke_handler(tauri::generate_handler![]);
-
-    builder
+        .plugin(tauri_plugin_os::init())
+        .invoke_handler(tauri::generate_handler![start_oauth_server, exchange_oauth_code])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
