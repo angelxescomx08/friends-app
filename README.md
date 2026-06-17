@@ -99,21 +99,21 @@ Salida: `src-tauri/gen/android/app/build/outputs/bundle/universalRelease/app-uni
 
 ### Firmar el APK de release
 
-```bash
+```powershell
 # 1. Generar keystore (solo una vez)
 keytool -genkey -v -keystore my-release-key.jks -keyalg RSA -keysize 2048 -validity 10000 -alias my-key-alias
 
 # 2. Firmar el APK
-jarsigner -verbose -sigalg SHA256withRSA -digestalg SHA-256 \
-  -keystore my-release-key.jks \
-  src-tauri/gen/android/app/build/outputs/apk/universal/release/app-universal-release-unsigned.apk \
-  my-key-alias
+jarsigner -verbose -sigalg SHA256withRSA -digestalg SHA-256 -keystore my-release-key.jks src-tauri\gen\android\app\build\outputs\apk\universal\release\app-universal-release-unsigned.apk my-key-alias
 
-# 3. Alinear el APK
-zipalign -v 4 \
-  src-tauri/gen/android/app/build/outputs/apk/universal/release/app-universal-release-unsigned.apk \
-  friends-app-release.apk
+# 3. Alinear el APK (zipalign viene en el Android SDK: %ANDROID_HOME%\build-tools\<version>\zipalign.exe)
+zipalign -v 4 src-tauri\gen\android\app\build\outputs\apk\universal\release\app-universal-release-unsigned.apk friends-app-release.apk
 ```
+
+> Si `zipalign` no se reconoce, usa la ruta completa:
+> ```powershell
+> & "$env:ANDROID_HOME\build-tools\35.0.0\zipalign.exe" -v 4 src-tauri\gen\android\app\build\outputs\apk\universal\release\app-universal-release-unsigned.apk friends-app-release.apk
+> ```
 
 ---
 
